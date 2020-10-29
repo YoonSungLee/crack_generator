@@ -20,6 +20,9 @@ crack_maker
 └───mask
 │       mask001.jpg
 │       mask002.jpg
+└───background
+│       back001.jpg
+│       back002.jpg
 └───output
     └───images
     |       cvt_crack001.jpg
@@ -30,6 +33,7 @@ crack_maker
 ```
 1. Input your crack images in the image directory. These images can even contain the non-crack patterns that you want to put into the background.
 2. Input your masking images in the mask directory. Remember that crack image's name and masking image's name should be the same.
+3. Input your background images where you want to put the pattern in the background directory. 
 # Usage
 ---
 ```
