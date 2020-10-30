@@ -11,13 +11,24 @@ from imgaug.augmentables.segmaps import SegmentationMapsOnImage
 def crack_seg(img, pos):
     return (img*pos).astype(np.uint8)
 
+# str2bool reference
+# https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--image_path', default='image', help='crack image path')
     parser.add_argument('--mask_path', default='mask', help='crack mask path')
     parser.add_argument('--background_path', default='background', help='background image path')
-    parser.add_argument('--augmentation', default=True, type=bool, help='whether to use augmentation or not')
+    parser.add_argument('--augmentation', default=True, type=str2bool, help='whether to use augmentation or not')
     args = parser.parse_args()
     image_path = args.image_path
     mask_path = args.mask_path
@@ -27,6 +38,13 @@ if __name__ == '__main__':
     masks = os.listdir(mask_path)
     backs = os.listdir(back_path)
 
+    if not os.path.isdir('output'):
+        os.makedirs('output/images')
+        os.makedirs('output/masks')
+    if not os.path.isdir('output/images'):
+        os.makedirs('output/images')
+    if not os.path.isdir('output/masks'):
+        os.makedirs('output/masks')
     # online augmentation code
     sometimes = lambda aug: iaa.Sometimes(0.5, aug)
 
@@ -37,7 +55,7 @@ if __name__ == '__main__':
             # Apply the following augmenters to most images.
             #
             iaa.Fliplr(0.5),  # horizontally flip 50% of all images
-            iaa.Flipud(0.2),  # vertically flip 20% of all images
+            iaa.Flipud(0.5),  # vertically flip 50% of all images
 
             # crop some of the images by 0-10% of their height/width
             sometimes(iaa.Crop(percent=(0, 0.1))),
@@ -59,7 +77,7 @@ if __name__ == '__main__':
                 rotate=(-45, 45),
                 shear=(-16, 16),
                 order=[0, 1],
-                # cval=(0, 255),
+                cval=(0, 255),
                 mode=ia.ALL
             )),
 
@@ -85,11 +103,11 @@ if __name__ == '__main__':
                            # gaussian blur (sigma between 0 and 3.0),
                            # average/uniform blur (kernel size between 2x2 and 7x7)
                            # median blur (kernel size between 3x3 and 11x11).
-                           iaa.OneOf([
-                               iaa.GaussianBlur((0, 3.0)),
-                               iaa.AverageBlur(k=(2, 7)),
-                               iaa.MedianBlur(k=(3, 11)),
-                           ]),
+                           # iaa.OneOf([
+                           #     iaa.GaussianBlur((0, 3.0)),
+                           #     iaa.AverageBlur(k=(2, 7)),
+                           #     iaa.MedianBlur(k=(3, 11)),
+                           # ]),
 
                            # Sharpen each image, overlay the result with the original
                            # image using an alpha between 0 (no sharpening) and 1
@@ -103,12 +121,12 @@ if __name__ == '__main__':
                            # directed edges. These edges are then marked in a black
                            # and white image and overlayed with the original image
                            # using an alpha of 0 to 0.7.
-                           sometimes(iaa.OneOf([
-                               iaa.EdgeDetect(alpha=(0, 0.7)),
-                               iaa.DirectedEdgeDetect(
-                                   alpha=(0, 0.7), direction=(0.0, 1.0)
-                               ),
-                           ])),
+                           # sometimes(iaa.OneOf([
+                           #     iaa.EdgeDetect(alpha=(0, 0.7)),
+                           #     iaa.DirectedEdgeDetect(
+                           #         alpha=(0, 0.7), direction=(0.0, 1.0)
+                           #     ),
+                           # ])),
 
                            # Add gaussian noise to some images.
                            # In 50% of these cases, the noise is randomly sampled per
@@ -136,14 +154,16 @@ if __name__ == '__main__':
                            # iaa.Invert(0.05, per_channel=True),  # invert color channels
 
                            # Add a value of -10 to 10 to each pixel.
-                           iaa.Add((-10, 10), per_channel=0.5),
+                           # iaa.Add((-10, 10), per_channel=0.5),
+                           iaa.Add((0, 30)),
 
                            # Change brightness of images (50-150% of original value).
                            # iaa.Multiply((0.5, 1.5), per_channel=0.5),
+                           iaa.Multiply((1.0, 1.2)),
 
                            # Improve or worsen the contrast of images.
                            # iaa.LinearContrast((0.5, 2.0), per_channel=0.5),
-                           iaa.LinearContrast((0.5, 1.0), per_channel=0.5),
+                           iaa.LinearContrast((1.0, 1.5)),
 
                            # Convert each image to grayscale and then overlay the
                            # result with the original with random alpha. I.e. remove
@@ -153,11 +173,11 @@ if __name__ == '__main__':
                            # In some images move pixels locally around (with random
                            # strengths).
                            sometimes(
-                               iaa.ElasticTransformation(alpha=(0.5, 3.5), sigma=0.25)
+                               iaa.ElasticTransformation(alpha=(0, 2.5), sigma=0.25)
                            ),
 
                            # In some images distort local areas with varying strength.
-                           sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.05)))
+                           sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.1)))
                        ],
                        # do all of the above augmentations in random order
                        random_order=True
@@ -168,7 +188,7 @@ if __name__ == '__main__':
     )
 
 
-    for back in backs:
+    for idx, back in enumerate(backs):
         # background image load
         img = cv2.imread(os.path.join(back_path, back), cv2.IMREAD_COLOR)
         img = cv2.resize(img, (448, 448), interpolation=cv2.INTER_AREA) # resize (448, 448)
@@ -184,12 +204,12 @@ if __name__ == '__main__':
         if args.augmentation:
             segmask = SegmentationMapsOnImage(crack_mask, shape=crack_img.shape)
             crack_img, crack_mask = seq(image=crack_img, segmentation_maps=segmask)
-
             crack_mask = crack_mask.arr[:,:,0]  # convert to array
-            crack_mask_origin = crack_mask.copy()
-            crack_mask_origin = np.where(crack_mask_origin >= 128, 255, 0).astype(np.uint8)
-            crack_mask = np.where(crack_mask >= 128, 1, 0).astype(np.uint8)
-            crack_mask = np.stack((crack_mask, crack_mask, crack_mask), axis=2)
+
+        crack_mask_origin = crack_mask.copy()
+        crack_mask_origin = np.where(crack_mask_origin >= 128, 255, 0).astype(np.uint8)
+        crack_mask = np.where(crack_mask >= 128, 1, 0).astype(np.uint8)
+        crack_mask = np.stack((crack_mask, crack_mask, crack_mask), axis=2)
 
 
 
@@ -198,7 +218,7 @@ if __name__ == '__main__':
 
         # overlap crack on background
         img = ((img*(1-crack_mask)) + crack).astype(np.uint8)
-        file_name = 'cvt_'+choice_
+        file_name = 'cvt_'+str(idx+1).zfill(4)+'_'+choice_
         cv2.imwrite(os.path.join('output/images', file_name), img)
         cv2.imwrite(os.path.join('output/masks', file_name), crack_mask_origin)
 
