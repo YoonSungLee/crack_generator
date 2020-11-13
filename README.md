@@ -33,9 +33,15 @@ crack_maker
 ```
 1. Input your crack images in the image directory. These images can even contain the non-crack patterns that you want to put into the background.
 2. Input your masking images in the mask directory. Remember that crack image's name and masking image's name should be the same.
-3. Input your background images where you want to put the pattern in the background directory. 
+3. Input your background images where you want to put the pattern in the background directory.
+
 # Usage
 ---
 ```
 python main.py
+```
+
+If you want to make crack generator with augmentation, you are able to set -augmetnation True like below code.
+```
+python main.py -augmentation True
 ```
