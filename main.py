@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--image_path', default='image', help='crack image path')
     parser.add_argument('--mask_path', default='mask', help='crack mask path')
     parser.add_argument('--background_path', default='background', help='background image path')
-    parser.add_argument('--augmentation', default=True, type=str2bool, help='whether to use augmentation or not')
+    parser.add_argument('--augmentation', default=False, type=str2bool, help='whether to use augmentation or not')
     args = parser.parse_args()
     image_path = args.image_path
     mask_path = args.mask_path
