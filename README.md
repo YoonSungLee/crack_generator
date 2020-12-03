@@ -45,3 +45,13 @@ If you want to make crack generator with augmentation, you are able to set -augm
 ```
 python main.py -augmentation True
 ```
+
+# Example
+
+The image below is a brief description of the contents of this repo.<br>
+
+<img src='img_01.png' width='100%'>
+
+The image below is the result of applying this repo.
+
+<img src='img_02.png' width='100%'>
